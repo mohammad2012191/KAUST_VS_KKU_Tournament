@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .leaderboard {
+            margin-bottom: 30px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .leaderboard-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .leaderboard-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 50px;
+        }
+
+        .rank.first { color: #FFD700; }
+        .rank.second { color: #C0C0C0; }
+        .rank.third { color: #CD7F32; }
+
+        .player-info {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            line-height: 1.6;
+        }
+
+        .tied-player {
+            display: block;
+            padding: 2px 0;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .tied-player::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .single-player {
+            display: block;
+        }
+
+        .score {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #667eea;
+            padding: 8px 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 25px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .admin-section {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px dashed #667eea;
+            display: none;
+        }
+
+        .admin-section.visible {
+            display: block;
+        }
+
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .admin-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .admin-title {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], input[type="number"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            min-width: 150px;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 15px rgba(238, 90, 111, 0.4);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .leaderboard-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .player-info {
+                margin-left: 0;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 KAUST vs KKU Kaggle Tournament</h1>
+        
+        <div class="leaderboard" id="leaderboard">
+            <!-- Leaderboard items will be populated here -->
+        </div>
+        
+        <div class="admin-section" id="adminSection">
+            <div class="admin-title">📝 Admin Controls</div>
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Player Name" />
+                <input type="number" id="playerScore" placeholder="Score" step="0.5" />
+                <button class="btn" onclick="addPlayer()">Add/Update Player</button>
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="sortLeaderboard()">Sort by Score</button>
+                <button class="btn btn-danger" onclick="clearLeaderboard()">Clear All</button>
+                <button class="btn" onclick="exportData()">Export Data</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData()" />
+                <button class="btn" onclick="document.getElementById('importFile').click()">Import Data</button>
+            </div>
+        </div>
+        
+        <button class="admin-toggle" onclick="toggleAdmin()" title="Toggle Admin Controls">⚙️</button>
+        
+        <div class="last-updated" id="lastUpdated">
+            Last updated: Never
+        </div>
+    </div>
+
+    <script>
+        // Tournament participants data
+        let leaderboardData = [
+            { name: "Hassan Mohammed Nasr", score: 5 },
+            { name: "almaan khan", score: 4 },
+            { name: "amjad alqasemi", score: 4 },
+            { name: "HUSSAIN ALYAFEI", score: 3 },
+            { name: "mohamed rashed", score: 2 },
+            { name: "Abdulrahman Almejna", score: 2 },
+            { name: "hussein almansory", score: 1.5 },
+            { name: "Abdullah_Altamimi", score: 1.5 },
+            { name: "abdulaziz albabtain", score: 1.5 },
+            { name: "ahmed+_", score: 1.5 },
+            { name: "Gwaizer", score: 1.5 },
+            { name: "abdulaziz alkhateb", score: 1 },
+            { name: "baraa", score: 0.5 },
+            { name: "Hamad Alkalbani", score: 0.5 },
+            { name: "Fawaz Al-Ghamdi", score: 0.5 }
+        ];
+
+        function capitalizeWords(str) {
+            return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function renderLeaderboard() {
+            const leaderboardElement = document.getElementById('leaderboard');
+            leaderboardElement.innerHTML = '';
+            
+            // Sort by score (highest first)
+            const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
+            
+            // Group players by score
+            const groupedByScore = {};
+            sortedData.forEach(player => {
+                if (!groupedByScore[player.score]) {
+                    groupedByScore[player.score] = [];
+                }
+                groupedByScore[player.score].push(player);
+            });
+            
+            // Create sorted groups
+            const sortedScores = Object.keys(groupedByScore).sort((a, b) => b - a);
+            
+            let currentRank = 1;
+            
+            sortedScores.forEach(score => {
+                const playersInGroup = groupedByScore[score];
+                
+                // Determine medal/crown based on current rank (no gaps)
+                let rankClass = '';
+                let rankEmoji = '';
+                
+                if (currentRank === 1) {
+                    rankClass = 'first';
+                    rankEmoji = '👑';
+                } else if (currentRank === 2) {
+                    rankClass = 'second';
+                    rankEmoji = '🥈';
+                } else if (currentRank === 3) {
+                    rankClass = 'third';
+                    rankEmoji = '🥉';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                
+                // Create player names list with proper formatting
+                let playerNamesHTML = '';
+                if (playersInGroup.length === 1) {
+                    playerNamesHTML = `<span class="single-player">${capitalizeWords(playersInGroup[0].name)}</span>`;
+                } else {
+                    playerNamesHTML = playersInGroup
+                        .map(p => `<span class="tied-player">${capitalizeWords(p.name)}</span>`)
+                        .join('');
+                }
+                
+                item.innerHTML = `
+                    <div class="rank ${rankClass}">${rankEmoji} #${currentRank}</div>
+                    <div class="player-info">
+                        <div class="player-name">${playerNamesHTML}</div>
+                    </div>
+                    <div class="score">${parseFloat(score).toLocaleString()}</div>
+                `;
+                
+                leaderboardElement.appendChild(item);
+                
+                // Move to next rank by only 1 (no gaps in ranking)
+                currentRank += 1;
+            });
+            
+            updateLastUpdated();
+        }
+
+        function addPlayer() {
+            const nameInput = document.getElementById('playerName');
+            const scoreInput = document.getElementById('playerScore');
+            
+            const name = nameInput.value.trim();
+            const score = parseFloat(scoreInput.value);
+            
+            if (name === '' || isNaN(score)) {
+                alert('Please enter a valid name and score');
+                return;
+            }
+            
+            // Check if player already exists
+            const existingPlayerIndex = leaderboardData.findIndex(player => player.name.toLowerCase() === name.toLowerCase());
+            
+            if (existingPlayerIndex !== -1) {
+                // Update existing player
+                leaderboardData[existingPlayerIndex].score = score;
+            } else {
+                // Add new player
+                leaderboardData.push({ name, score });
+            }
+            
+            nameInput.value = '';
+            scoreInput.value = '';
+            
+            renderLeaderboard();
+        }
+
+        function toggleAdmin() {
+            const adminSection = document.getElementById('adminSection');
+            adminSection.classList.toggle('visible');
+        }
+
+        function sortLeaderboard() {
+            renderLeaderboard();
+        }
+
+        function clearLeaderboard() {
+            if (confirm('Are you sure you want to clear the entire leaderboard?')) {
+                leaderboardData = [];
+                renderLeaderboard();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(leaderboardData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'leaderboard-data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        leaderboardData = importedData;
+                        renderLeaderboard();
+                        alert('Data imported successfully!');
+                    } else {
+                        alert('Invalid file format');
+                    }
+                } catch (error) {
+                    alert('Error reading file');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.getElementById('lastUpdated').textContent = `Last updated: ${timeString}`;
+        }
+
+        // Allow adding players by pressing Enter
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('playerScore').focus();
+            }
+        });
+
+        document.getElementById('playerScore').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addPlayer();
+            }
+        });
+
+        // Initial render
+        renderLeaderboard();
+    </script>
+</body>
+</html>
